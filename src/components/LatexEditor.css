@@ -1,0 +1,70 @@
+.latex-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
+}
+
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.editor-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.compiling-indicator {
+  color: #396cd8;
+  font-size: 12px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.editor-wrapper {
+  flex: 1;
+  overflow: hidden;
+}
+
+.editor-wrapper .cm-editor {
+  height: 100%;
+}
+
+.editor-wrapper .cm-scroller {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .latex-editor-container {
+    background-color: #1e1e1e;
+  }
+
+  .editor-toolbar {
+    background-color: #252526;
+    border-bottom-color: #3e3e3e;
+  }
+
+  .editor-title {
+    color: #cccccc;
+  }
+
+  .compiling-indicator {
+    color: #24c8db;
+  }
+}
