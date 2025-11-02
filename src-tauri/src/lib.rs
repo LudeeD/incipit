@@ -1,16 +1,20 @@
 use tectonic::latex_to_pdf;
 
 #[tauri::command]
-fn compile_latex(source: String) -> Result<Vec<u8>, String> {
-    // Use Tectonic's simple API to compile LaTeX to PDF
-    let pdf_data = latex_to_pdf(&source)
-        .map_err(|e| format!("LaTeX compilation failed: {}", e))?;
+async fn compile_latex(source: String) -> Result<Vec<u8>, String> {
+    // Run the blocking compilation in a separate thread to avoid blocking the UI
+    tauri::async_runtime::spawn_blocking(move || {
+        let pdf_data = latex_to_pdf(&source)
+            .map_err(|e| format!("LaTeX compilation failed: {}", e))?;
 
-    if pdf_data.is_empty() {
-        return Err("Compilation produced no output".to_string());
-    }
+        if pdf_data.is_empty() {
+            return Err("Compilation produced no output".to_string());
+        }
 
-    Ok(pdf_data)
+        Ok(pdf_data)
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
