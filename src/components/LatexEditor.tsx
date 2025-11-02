@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView, lineNumbers, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { bracketMatching } from "@codemirror/language";
+import { bracketMatching, syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { latex } from "codemirror-lang-latex";
 import { invoke } from "@tauri-apps/api/core";
 import "./LatexEditor.css";
 
@@ -23,7 +24,7 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
-  const compileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentContent, setCurrentContent] = useState(initialContent);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -39,6 +40,8 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
     const startState = EditorState.create({
       doc: initialContent,
       extensions: [
+        latex(),
+        syntaxHighlighting(defaultHighlightStyle),
         lineNumbers(),
         history(),
         bracketMatching(),
@@ -46,16 +49,8 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const content = update.state.doc.toString();
+            setCurrentContent(content);
             onChange(content);
-
-            // Debounce compilation: wait 500ms after user stops typing
-            if (compileTimeoutRef.current) {
-              clearTimeout(compileTimeoutRef.current);
-            }
-
-            compileTimeoutRef.current = setTimeout(() => {
-              compileLatex(content);
-            }, 500);
           }
         }),
         EditorView.theme({
@@ -73,27 +68,12 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
 
     viewRef.current = view;
 
-    // Compile initial content after Tauri is ready
-    if (checkTauriReady()) {
-      compileLatex(initialContent);
-    } else {
-      // Wait a bit for Tauri to initialize
-      setTimeout(() => {
-        if (checkTauriReady()) {
-          compileLatex(initialContent);
-        }
-      }, 100);
-    }
-
     return () => {
       view.destroy();
-      if (compileTimeoutRef.current) {
-        clearTimeout(compileTimeoutRef.current);
-      }
     };
   }, []);
 
-  const compileLatex = async (content: string) => {
+  const compileLatex = async () => {
     setIsCompiling(true);
     try {
       // Check if Tauri is available
@@ -102,7 +82,7 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
       }
 
       const pdfBytes = await invoke<number[]>("compile_latex", {
-        source: content,
+        source: currentContent,
       });
 
       // Convert number array to Uint8Array
@@ -120,7 +100,16 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
     <div className="latex-editor-container">
       <div className="editor-toolbar">
         <span className="editor-title">LaTeX Editor</span>
-        {isCompiling && <span className="compiling-indicator">Compiling...</span>}
+        <div className="toolbar-actions">
+          {isCompiling && <span className="compiling-indicator">Compiling...</span>}
+          <button
+            className="compile-button"
+            onClick={compileLatex}
+            disabled={isCompiling}
+          >
+            {isCompiling ? "Compiling..." : "Compile"}
+          </button>
+        </div>
       </div>
       <div ref={editorRef} className="editor-wrapper" />
     </div>
