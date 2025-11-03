@@ -13,12 +13,30 @@
     "windows": [
       {
         "title": "incipit",
-        "width": 800,
-        "height": 600
+        "width": 1200,
+        "height": 800
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "main-capability",
+          "windows": ["main"],
+          "permissions": [
+            "core:default",
+            "core:path:default",
+            "core:event:default",
+            "core:window:default",
+            "core:app:default",
+            "core:resources:default",
+            "core:menu:default",
+            "core:tray:default",
+            "dialog:allow-open",
+            "dialog:allow-save"
+          ]
+        }
+      ]
     }
   },
   "bundle": {

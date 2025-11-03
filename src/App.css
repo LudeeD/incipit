@@ -29,6 +29,49 @@ html, body, #root {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: #e8e8e8;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.toolbar-button {
+  padding: 6px 12px;
+  font-size: 13px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toolbar-button:hover:not(:disabled) {
+  background-color: #f5f5f5;
+  border-color: #999;
+}
+
+.toolbar-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.current-file-label {
+  font-size: 13px;
+  color: #666;
+  margin-left: auto;
+  font-family: monospace;
+}
+
+.app-container > div[data-panel-group] {
+  flex: 1;
 }
 
 .resize-handle {
@@ -50,6 +93,26 @@ html, body, #root {
   :root {
     color: #f6f6f6;
     background-color: #1e1e1e;
+  }
+
+  .toolbar {
+    background-color: #252526;
+    border-bottom-color: #333;
+  }
+
+  .toolbar-button {
+    background-color: #3c3c3c;
+    border-color: #555;
+    color: #ccc;
+  }
+
+  .toolbar-button:hover:not(:disabled) {
+    background-color: #464646;
+    border-color: #666;
+  }
+
+  .current-file-label {
+    color: #999;
   }
 
   .resize-handle {

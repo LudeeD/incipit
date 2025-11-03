@@ -13,6 +13,8 @@ interface LatexEditorProps {
   onChange: (content: string) => void;
   onCompile: (pdf: Uint8Array) => void;
   onError: (error: string) => void;
+  projectPath: string | null;
+  filePath: string | null;
 }
 
 const LatexEditor: React.FC<LatexEditorProps> = ({
@@ -20,6 +22,8 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
   onChange,
   onCompile,
   onError,
+  projectPath,
+  filePath,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -73,6 +77,21 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
     };
   }, []);
 
+  // Update editor content when initialContent changes (e.g., when loading a new file)
+  useEffect(() => {
+    if (viewRef.current && initialContent !== currentContent) {
+      const view = viewRef.current;
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: initialContent,
+        },
+      });
+      setCurrentContent(initialContent);
+    }
+  }, [initialContent]);
+
   const compileLatex = async () => {
     setIsCompiling(true);
     try {
@@ -81,9 +100,21 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
         throw new Error("Tauri API not available. Make sure you're running in Tauri context.");
       }
 
-      const pdfBytes = await invoke<number[]>("compile_latex", {
-        source: currentContent,
-      });
+      let pdfBytes: number[];
+
+      // Use project-aware compilation if we have a project open
+      if (projectPath && filePath) {
+        pdfBytes = await invoke<number[]>("compile_latex_project", {
+          projectPath,
+          filePath,
+          source: currentContent,
+        });
+      } else {
+        // Fall back to simple compilation for standalone documents
+        pdfBytes = await invoke<number[]>("compile_latex", {
+          source: currentContent,
+        });
+      }
 
       // Convert number array to Uint8Array
       const pdfData = new Uint8Array(pdfBytes);
