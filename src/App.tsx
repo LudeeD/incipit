@@ -1,36 +1,11 @@
 import { useState, useEffect } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
 import LatexEditor from "./components/LatexEditor";
 import PdfViewer from "./components/PdfViewer";
 import FileTree, { FileNode } from "./components/FileTree";
+import WelcomeScreen from "./components/WelcomeScreen";
 import "./App.css";
-
-const DEFAULT_LATEX = `\\documentclass{article}
-\\usepackage[utf8]{inputenc}
-
-\\title{Welcome to Incipit}
-\\author{Your Name}
-\\date{\\today}
-
-\\begin{document}
-
-\\maketitle
-
-\\section{Introduction}
-
-This is a simple LaTeX document. Start editing to see live updates!
-
-\\subsection{Features}
-\\begin{itemize}
-    \\item Live PDF preview
-    \\item Syntax highlighting
-    \\item Resizable panels
-    \\item Project management
-\\end{itemize}
-
-\\end{document}`;
 
 interface GlobalSettings {
   recent_projects: string[];
@@ -39,6 +14,7 @@ interface GlobalSettings {
 
 interface ProjectMeta {
   last_opened_file: string | null;
+  root_file: string;
   project_settings: Record<string, unknown>;
 }
 
@@ -49,10 +25,13 @@ function App() {
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
 
   // Editor state
-  const [latexContent, setLatexContent] = useState(DEFAULT_LATEX);
+  const [latexContent, setLatexContent] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
   const [compilationError, setCompilationError] = useState<string | null>(null);
+
+  // Global settings
+  const [recentProjects, setRecentProjects] = useState<string[]>([]);
 
   // Load global settings on startup
   useEffect(() => {
@@ -62,64 +41,87 @@ function App() {
   const loadSettings = async () => {
     try {
       const settings = await invoke<GlobalSettings>("load_global_settings");
-      // Could auto-open last project here if desired
+      setRecentProjects(settings.recent_projects);
       console.log("Loaded settings:", settings);
     } catch (error) {
       console.error("Failed to load settings:", error);
     }
   };
 
-  const handleOpenProject = async () => {
+  const handleProjectOpened = async (path: string, tree: FileNode) => {
     try {
-      const selected = await open({
-        directory: true,
-        multiple: false,
-        title: "Open LaTeX Project",
-      });
-
-      if (!selected || typeof selected !== "string") {
-        return;
-      }
-
-      // Load project
-      const tree = await invoke<FileNode>("open_project", { path: selected });
       setFileTree(tree);
-      setProjectPath(selected);
+      setProjectPath(path);
 
       // Load project metadata
       const meta = await invoke<ProjectMeta>("load_project_meta", {
-        projectPath: selected,
+        projectPath: path,
       });
 
-      // Auto-open last file if available
-      if (meta.last_opened_file) {
-        await loadFile(selected, meta.last_opened_file);
-      } else {
-        // Reset to default
-        setLatexContent(DEFAULT_LATEX);
-        setCurrentFilePath(null);
-        setHasUnsavedChanges(false);
+      // Auto-open last file or root file
+      const fileToOpen = meta.last_opened_file || meta.root_file;
+      if (fileToOpen) {
+        await loadFile(path, fileToOpen);
+
+        // Check if PDF exists in build directory, if not auto-compile
+        await checkAndAutoCompile(path, fileToOpen);
       }
 
       // Update global settings with recent project
-      await updateRecentProjects(selected);
+      await updateRecentProjects(path);
     } catch (error) {
-      console.error("Failed to open project:", error);
-      alert(`Failed to open project: ${error}`);
+      console.error("Failed to initialize project:", error);
+      alert(`Failed to initialize project: ${error}`);
+    }
+  };
+
+  const checkAndAutoCompile = async (projPath: string, filePath: string) => {
+    try {
+      // Check if PDF exists in build directory
+      const pdfExists = await invoke<boolean>("check_pdf_exists", {
+        projectPath: projPath,
+        filePath: filePath,
+      });
+
+      if (pdfExists) {
+        console.log("PDF found in build directory, loading it...");
+        // Load the existing PDF
+        const pdfBytes = await invoke<number[]>("load_pdf", {
+          projectPath: projPath,
+          filePath: filePath,
+        });
+        const pdf = new Uint8Array(pdfBytes);
+        setPdfData(pdf);
+      } else {
+        console.log("No PDF found, auto-compiling...");
+        // Auto-compile
+        const pdfBytes = await invoke<number[]>("compile_latex_project", {
+          projectPath: projPath,
+          filePath: filePath,
+          source: latexContent,
+        });
+        const pdf = new Uint8Array(pdfBytes);
+        setPdfData(pdf);
+        setCompilationError(null);
+      }
+    } catch (error) {
+      // Don't show error on auto-compile/load failure, just log it
+      console.log("Auto-compile/load skipped or failed:", error);
     }
   };
 
   const updateRecentProjects = async (path: string) => {
     try {
       const settings = await invoke<GlobalSettings>("load_global_settings");
-      const recentProjects = [
+      const updatedRecent = [
         path,
         ...settings.recent_projects.filter((p) => p !== path),
       ].slice(0, 10); // Keep last 10
 
       await invoke("save_global_settings", {
-        settings: { ...settings, recent_projects: recentProjects },
+        settings: { ...settings, recent_projects: updatedRecent },
       });
+      setRecentProjects(updatedRecent);
     } catch (error) {
       console.error("Failed to update recent projects:", error);
     }
@@ -205,12 +207,22 @@ function App() {
     setCompilationError(error);
   };
 
+  // Show welcome screen if no project is open
+  if (!projectPath) {
+    return (
+      <WelcomeScreen
+        onProjectOpened={handleProjectOpened}
+        recentProjects={recentProjects}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <div className="toolbar">
-        <button onClick={handleOpenProject} className="toolbar-button">
-          Open Project
-        </button>
+        <span className="project-name">
+          {projectPath.split("/").pop()}
+        </span>
         {currentFilePath && (
           <>
             <button

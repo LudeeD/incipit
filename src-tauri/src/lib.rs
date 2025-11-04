@@ -1,7 +1,7 @@
 mod commands;
 
-use commands::compilation::{compile_latex, compile_latex_project};
-use commands::project::{load_project_meta, open_project, read_file, save_file, save_project_meta};
+use commands::compilation::compile_latex_project;
+use commands::project::{check_pdf_exists, create_new_project, load_pdf, load_project_meta, open_project, read_file, save_file, save_project_meta};
 use commands::settings::{load_global_settings, save_global_settings};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -10,9 +10,11 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            compile_latex,
             compile_latex_project,
             open_project,
+            create_new_project,
+            check_pdf_exists,
+            load_pdf,
             read_file,
             save_file,
             load_project_meta,

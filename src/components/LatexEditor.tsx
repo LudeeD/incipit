@@ -93,6 +93,11 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
   }, [initialContent]);
 
   const compileLatex = async () => {
+    if (!projectPath || !filePath) {
+      onError("No project or file is open. Please open a project first.");
+      return;
+    }
+
     setIsCompiling(true);
     try {
       // Check if Tauri is available
@@ -100,21 +105,12 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
         throw new Error("Tauri API not available. Make sure you're running in Tauri context.");
       }
 
-      let pdfBytes: number[];
-
-      // Use project-aware compilation if we have a project open
-      if (projectPath && filePath) {
-        pdfBytes = await invoke<number[]>("compile_latex_project", {
-          projectPath,
-          filePath,
-          source: currentContent,
-        });
-      } else {
-        // Fall back to simple compilation for standalone documents
-        pdfBytes = await invoke<number[]>("compile_latex", {
-          source: currentContent,
-        });
-      }
+      // Use project-based compilation
+      const pdfBytes = await invoke<number[]>("compile_latex_project", {
+        projectPath,
+        filePath,
+        source: currentContent,
+      });
 
       // Convert number array to Uint8Array
       const pdfData = new Uint8Array(pdfBytes);

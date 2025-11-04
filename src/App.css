@@ -63,6 +63,12 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+.project-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
 .current-file-label {
   font-size: 13px;
   color: #666;
@@ -109,6 +115,10 @@ html, body, #root {
   .toolbar-button:hover:not(:disabled) {
     background-color: #464646;
     border-color: #666;
+  }
+
+  .project-name {
+    color: #ddd;
   }
 
   .current-file-label {
