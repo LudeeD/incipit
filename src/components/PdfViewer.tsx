@@ -54,8 +54,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ pdfData, error }) => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-800">
-      <div className="flex justify-between items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 text-sm flex-wrap gap-2">
-        <span className="font-semibold text-gray-800 dark:text-gray-300">PDF Preview</span>
+      <div className="flex justify-end items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 text-sm flex-wrap gap-2">
         {pdfData && (
           <div className="flex gap-4 items-center flex-wrap">
             <div className="flex items-center gap-2">
@@ -91,7 +90,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ pdfData, error }) => {
         )}
       </div>
 
-      <div className="flex-1 overflow-auto flex justify-center items-start p-5" ref={containerRef}>
+      <div className="flex-1 overflow-auto flex justify-center items-start p-2" ref={containerRef}>
         {error && (
           <div className="flex flex-col items-center justify-center p-10 text-center text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg max-w-2xl">
             <h3 className="mb-3 text-base font-semibold">Compilation Error</h3>

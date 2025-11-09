@@ -41,18 +41,24 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   return (
     <div>
       <div
-        className={`flex items-center py-1.5 px-2 cursor-pointer select-none text-[13px] whitespace-nowrap transition-colors ${
+        className={`flex items-center py-1 px-2 cursor-pointer select-none text-[13px] whitespace-nowrap transition-colors ${
           isSelected
             ? "bg-gray-300 dark:bg-gray-700 font-medium text-gray-900 dark:text-white"
             : "text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800"
         }`}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+        style={{ paddingLeft: `${depth * 10 + 8}px` }}
         onClick={handleClick}
       >
         {node.is_dir && (
-          <span className="mr-1.5 text-[10px] w-4 text-center flex-shrink-0">{isExpanded ? "▼" : "▶"}</span>
+          <span className="mr-1.5 text-[10px] w-4 text-center flex-shrink-0">
+            {isExpanded ? "▼" : "▶"}
+          </span>
         )}
-        {!node.is_dir && <span className="mr-1.5 text-[10px] w-4 text-center flex-shrink-0">📄</span>}
+        {!node.is_dir && (
+          <span className="mr-1.5 text-[10px] w-4 text-center flex-shrink-0">
+            📄
+          </span>
+        )}
         <span className="overflow-hidden text-ellipsis">{node.name}</span>
       </div>
       {node.is_dir && isExpanded && node.children && (
@@ -72,19 +78,27 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   );
 };
 
-const FileTree: React.FC<FileTreeProps> = ({ root, onFileSelect, currentFile }) => {
+const FileTree: React.FC<FileTreeProps> = ({
+  root,
+  onFileSelect,
+  currentFile,
+}) => {
   if (!root) {
     return (
-      <div className="h-full flex flex-col bg-gray-100 dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700 overflow-hidden">
-        <div className="p-4 text-gray-500 dark:text-gray-500 text-[13px] text-center">No project opened</div>
+      <div className="h-full flex flex-col">
+        <div className="p-4 text-gray-500 dark:text-gray-500 text-[13px] text-center">
+          No project opened
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-100 dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700 overflow-hidden">
-      <div className="px-4 py-3 font-semibold text-[13px] text-gray-800 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 flex-shrink-0">Project Files</div>
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+    <div className="h-full flex flex-col rounded-md  bg-white">
+      <div className="px-3 py-1.5 font-bold text-lg text-gray-800 dark:text-gray-300">
+        Files
+      </div>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-1">
         {root.children && root.children.length > 0 ? (
           root.children.map((child, idx) => (
             <FileTreeNode
@@ -96,7 +110,9 @@ const FileTree: React.FC<FileTreeProps> = ({ root, onFileSelect, currentFile }) 
             />
           ))
         ) : (
-          <div className="p-4 text-gray-500 dark:text-gray-500 text-[13px] text-center">Empty project</div>
+          <div className="p-4 text-gray-500 dark:text-gray-500 text-[13px] text-center">
+            Empty project
+          </div>
         )}
       </div>
     </div>

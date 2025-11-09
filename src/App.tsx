@@ -5,8 +5,18 @@ import LatexEditor from "./components/LatexEditor";
 import PdfViewer from "./components/PdfViewer";
 import FileTree, { FileNode } from "./components/FileTree";
 import WelcomeScreen from "./components/WelcomeScreen";
+import Sidebar from "./components/Sidebar";
 import { ArrowLeft } from "lucide-react";
 import "./App.css";
+
+type SidebarView =
+  | "files"
+  | "search"
+  | "settings"
+  | "git"
+  | "outline"
+  | "issues"
+  | null;
 
 interface GlobalSettings {
   recent_projects: string[];
@@ -33,6 +43,9 @@ function App() {
 
   // Global settings
   const [recentProjects, setRecentProjects] = useState<string[]>([]);
+
+  // Sidebar state
+  const [activeSidebarView, setActiveSidebarView] = useState<SidebarView>(null);
 
   // Load global settings on startup
   useEffect(() => {
@@ -227,6 +240,8 @@ function App() {
     setCompilationError(null);
   };
 
+  const isSidebarOpen = activeSidebarView !== null;
+
   // Show welcome screen if no project is open
   if (!projectPath) {
     return (
@@ -238,58 +253,66 @@ function App() {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col">
-      <div className="flex items-center gap-3 px-3 py-2 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 flex-shrink-0">
+    <div className="h-screen w-screen overflow-hidden flex flex-col bg-gray-100">
+      <div className="flex flex-row items-center py-2">
+        <div id="spacer" className="w-15"></div>
         <button
           onClick={handleCloseProject}
-          className="flex items-center gap-2 px-3 py-1.5 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-all hover:bg-gray-50 hover:border-gray-500 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:border-gray-500"
+          className="flex items-center px-2 py-2 hover:bg-gray-200 rounded-md mr-2"
           title="Close project"
         >
-          <ArrowLeft size={16} />
-          <span>Back</span>
+          <ArrowLeft size={14} />
         </button>
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-300">
+        <span className="text-lg  text-gray-800 dark:text-gray-300 mr-2">
           {projectPath.split("/").pop()}
         </span>
-        {currentFilePath && (
-          <>
-            <button
-              onClick={handleSaveFile}
-              className="px-4 py-1.5 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-all hover:bg-gray-50 hover:border-gray-500 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!hasUnsavedChanges}
-            >
-              Save {hasUnsavedChanges && "*"}
-            </button>
-            <span className="text-[13px] text-gray-600 dark:text-gray-400 ml-auto font-mono">
-              {currentFilePath}
-            </span>
-          </>
-        )}
+        <button
+          onClick={handleSaveFile}
+          className="px-2 py-0.5 text-[12px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-all hover:bg-gray-50 hover:border-gray-500 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!hasUnsavedChanges}
+        >
+          Save {hasUnsavedChanges && "*"}
+        </button>
+        <span className="text-[12px] text-gray-600 dark:text-gray-400 font-mono">
+          {currentFilePath}
+        </span>
       </div>
-      <PanelGroup direction="horizontal">
-        <Panel defaultSize={20} minSize={15} maxSize={35}>
-          <FileTree
-            root={fileTree}
-            onFileSelect={handleFileSelect}
-            currentFile={currentFilePath}
-          />
-        </Panel>
-        <PanelResizeHandle className="w-1 bg-gray-300 dark:bg-gray-700 cursor-col-resize transition-colors hover:bg-blue-500 dark:hover:bg-cyan-500 data-[resize-handle-active]:bg-blue-500 dark:data-[resize-handle-active]:bg-cyan-500" />
-        <Panel defaultSize={40} minSize={25}>
-          <LatexEditor
-            initialContent={latexContent}
-            onChange={handleLatexChange}
-            onCompile={handleCompile}
-            onError={handleError}
-            projectPath={projectPath}
-            filePath={currentFilePath}
-          />
-        </Panel>
-        <PanelResizeHandle className="w-1 bg-gray-300 dark:bg-gray-700 cursor-col-resize transition-colors hover:bg-blue-500 dark:hover:bg-cyan-500 data-[resize-handle-active]:bg-blue-500 dark:data-[resize-handle-active]:bg-cyan-500" />
-        <Panel defaultSize={40} minSize={25}>
-          <PdfViewer pdfData={pdfData} error={compilationError} />
-        </Panel>
-      </PanelGroup>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          activeView={activeSidebarView}
+          onViewChange={setActiveSidebarView}
+        />
+        <PanelGroup direction="horizontal" className=" dark:bg-gray-800">
+          {isSidebarOpen && (
+            <>
+              <Panel id="sidebar" minSize={10} maxSize={20} order={1}>
+                {activeSidebarView === "files" && (
+                  <FileTree
+                    root={fileTree}
+                    onFileSelect={handleFileSelect}
+                    currentFile={currentFilePath}
+                  />
+                )}
+              </Panel>
+              <PanelResizeHandle className="w-3 cursor-col-resize" />
+            </>
+          )}
+          <Panel id="editor" minSize={25} order={2}>
+            <LatexEditor
+              initialContent={latexContent}
+              onChange={handleLatexChange}
+              onCompile={handleCompile}
+              onError={handleError}
+              projectPath={projectPath}
+              filePath={currentFilePath}
+            />
+          </Panel>
+          <PanelResizeHandle className="w-3 cursor-col-resize" />
+          <Panel id="preview" minSize={25} order={3}>
+            <PdfViewer pdfData={pdfData} error={compilationError} />
+          </Panel>
+        </PanelGroup>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView, lineNumbers, keymap } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { bracketMatching, syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
+import {
+  bracketMatching,
+  syntaxHighlighting,
+  defaultHighlightStyle,
+} from "@codemirror/language";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { latex } from "codemirror-lang-latex";
 import { invoke } from "@tauri-apps/api/core";
@@ -32,13 +41,10 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
   useEffect(() => {
     if (!editorRef.current) return;
 
-    // Wait for Tauri to be ready before compiling
-    const checkTauriReady = () => {
-      return typeof window !== 'undefined' && window.__TAURI_INTERNALS__ !== undefined;
-    };
-
     // Check if user prefers dark mode
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
 
     const startState = EditorState.create({
       doc: initialContent,
@@ -91,6 +97,28 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
     }
   }, [initialContent]);
 
+  const insertLatexCommand = (before: string, after: string = "") => {
+    if (!viewRef.current) return;
+
+    const view = viewRef.current;
+    const { from, to } = view.state.selection.main;
+    const selectedText = view.state.doc.sliceString(from, to);
+
+    view.dispatch({
+      changes: {
+        from,
+        to,
+        insert: before + selectedText + after,
+      },
+      selection: {
+        anchor: from + before.length,
+        head: from + before.length + selectedText.length,
+      },
+    });
+
+    view.focus();
+  };
+
   const compileLatex = async () => {
     if (!projectPath || !filePath) {
       onError("No project or file is open. Please open a project first.");
@@ -99,11 +127,6 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
 
     setIsCompiling(true);
     try {
-      // Check if Tauri is available
-      if (typeof window !== 'undefined' && !window.__TAURI_INTERNALS__) {
-        throw new Error("Tauri API not available. Make sure you're running in Tauri context.");
-      }
-
       // Use project-based compilation
       const pdfBytes = await invoke<number[]>("compile_latex_project", {
         projectPath,
@@ -123,13 +146,67 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex justify-between items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 text-sm">
-        <span className="font-semibold text-gray-800 dark:text-gray-300">LaTeX Editor</span>
-        <div className="flex items-center gap-3">
-          {isCompiling && <span className="text-blue-600 dark:text-cyan-500 text-xs animate-pulse">Compiling...</span>}
+    <div className="flex flex-col h-full ">
+      <div className="flex justify-between items-center px-3 py-1.5 text-sm">
+        <div className="flex items-center gap-2">
+          <div className="flex">
+            <button
+              onClick={() => insertLatexCommand("\\textbf{", "}")}
+              className="px-3 py-1 text-[13px] font-bold bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-l hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+              title="Bold"
+            >
+              B
+            </button>
+            <button
+              onClick={() => insertLatexCommand("\\textit{", "}")}
+              className="px-3 py-1 text-[13px] italic bg-white dark:bg-gray-700 border-t border-b border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+              title="Italic"
+            >
+              I
+            </button>
+            <button
+              onClick={() => insertLatexCommand("\\underline{", "}")}
+              className="px-3 py-1 text-[13px] underline bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-r hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+              title="Underline"
+            >
+              U
+            </button>
+          </div>
           <button
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white border-none rounded text-[13px] font-medium cursor-pointer transition-colors disabled:bg-blue-400 dark:disabled:bg-cyan-400 disabled:cursor-not-allowed"
+            onClick={() => insertLatexCommand("\\section{", "}")}
+            className="px-3 py-1 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+            title="Section"
+          >
+            §
+          </button>
+          <button
+            onClick={() =>
+              insertLatexCommand(
+                "\\begin{itemize}\n  \\item ",
+                "\n\\end{itemize}",
+              )
+            }
+            className="px-3 py-1 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+            title="List"
+          >
+            •
+          </button>
+          <button
+            onClick={() => insertLatexCommand("$", "$")}
+            className="px-3 py-1 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+            title="Inline Math"
+          >
+            $
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          {isCompiling && (
+            <span className="text-blue-600 dark:text-cyan-500 text-xs animate-pulse">
+              Compiling...
+            </span>
+          )}
+          <button
+            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white border-none rounded text-[13px] font-medium cursor-pointer transition-colors disabled:bg-blue-400 dark:disabled:bg-cyan-400 disabled:cursor-not-allowed"
             onClick={compileLatex}
             disabled={isCompiling}
           >
@@ -137,7 +214,10 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
           </button>
         </div>
       </div>
-      <div ref={editorRef} className="flex-1 overflow-hidden [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm [&_.cm-scroller]:leading-relaxed" />
+      <div
+        ref={editorRef}
+        className=" bg-white dark:bg-gray-900 flex-1 overflow-hidden [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-[14px] [&_.cm-scroller]:leading-relaxed [&_.cm-scroller]:antialiased"
+      />
     </div>
   );
 };
