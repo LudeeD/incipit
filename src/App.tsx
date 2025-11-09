@@ -5,6 +5,7 @@ import LatexEditor from "./components/LatexEditor";
 import PdfViewer from "./components/PdfViewer";
 import FileTree, { FileNode } from "./components/FileTree";
 import WelcomeScreen from "./components/WelcomeScreen";
+import { ArrowLeft } from "lucide-react";
 import "./App.css";
 
 interface GlobalSettings {
@@ -151,7 +152,7 @@ function App() {
     // Warn about unsaved changes
     if (hasUnsavedChanges) {
       const confirmed = confirm(
-        "You have unsaved changes. Do you want to continue without saving?"
+        "You have unsaved changes. Do you want to continue without saving?",
       );
       if (!confirmed) return;
     }
@@ -207,6 +208,25 @@ function App() {
     setCompilationError(error);
   };
 
+  const handleCloseProject = () => {
+    // Warn about unsaved changes
+    if (hasUnsavedChanges) {
+      const confirmed = confirm(
+        "You have unsaved changes. Do you want to close the project without saving?",
+      );
+      if (!confirmed) return;
+    }
+
+    // Reset all state
+    setProjectPath(null);
+    setFileTree(null);
+    setCurrentFilePath(null);
+    setLatexContent("");
+    setHasUnsavedChanges(false);
+    setPdfData(null);
+    setCompilationError(null);
+  };
+
   // Show welcome screen if no project is open
   if (!projectPath) {
     return (
@@ -218,21 +238,31 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      <div className="toolbar">
-        <span className="project-name">
+    <div className="h-screen w-screen overflow-hidden flex flex-col">
+      <div className="flex items-center gap-3 px-3 py-2 bg-gray-200 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={handleCloseProject}
+          className="flex items-center gap-2 px-3 py-1.5 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-all hover:bg-gray-50 hover:border-gray-500 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:border-gray-500"
+          title="Close project"
+        >
+          <ArrowLeft size={16} />
+          <span>Back</span>
+        </button>
+        <span className="text-sm font-semibold text-gray-800 dark:text-gray-300">
           {projectPath.split("/").pop()}
         </span>
         {currentFilePath && (
           <>
             <button
               onClick={handleSaveFile}
-              className="toolbar-button"
+              className="px-4 py-1.5 text-[13px] bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded transition-all hover:bg-gray-50 hover:border-gray-500 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!hasUnsavedChanges}
             >
               Save {hasUnsavedChanges && "*"}
             </button>
-            <span className="current-file-label">{currentFilePath}</span>
+            <span className="text-[13px] text-gray-600 dark:text-gray-400 ml-auto font-mono">
+              {currentFilePath}
+            </span>
           </>
         )}
       </div>
@@ -244,7 +274,7 @@ function App() {
             currentFile={currentFilePath}
           />
         </Panel>
-        <PanelResizeHandle className="resize-handle" />
+        <PanelResizeHandle className="w-1 bg-gray-300 dark:bg-gray-700 cursor-col-resize transition-colors hover:bg-blue-500 dark:hover:bg-cyan-500 data-[resize-handle-active]:bg-blue-500 dark:data-[resize-handle-active]:bg-cyan-500" />
         <Panel defaultSize={40} minSize={25}>
           <LatexEditor
             initialContent={latexContent}
@@ -255,7 +285,7 @@ function App() {
             filePath={currentFilePath}
           />
         </Panel>
-        <PanelResizeHandle className="resize-handle" />
+        <PanelResizeHandle className="w-1 bg-gray-300 dark:bg-gray-700 cursor-col-resize transition-colors hover:bg-blue-500 dark:hover:bg-cyan-500 data-[resize-handle-active]:bg-blue-500 dark:data-[resize-handle-active]:bg-cyan-500" />
         <Panel defaultSize={40} minSize={25}>
           <PdfViewer pdfData={pdfData} error={compilationError} />
         </Panel>

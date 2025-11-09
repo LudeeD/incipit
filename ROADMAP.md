@@ -1,0 +1,2 @@
+- [X] install, use tailwind
+- [ ] move exixting styles to tailwind

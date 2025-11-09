@@ -15,15 +15,18 @@
     "@codemirror/state": "^6.5.2",
     "@codemirror/theme-one-dark": "^6.1.3",
     "@codemirror/view": "^6.38.6",
+    "@tailwindcss/vite": "^4.1.16",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "codemirror-lang-latex": "^0.2.0",
+    "lucide-react": "^0.553.0",
     "pdfjs-dist": "^5.4.296",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-pdf": "^10.2.0",
-    "react-resizable-panels": "^3.0.6"
+    "react-resizable-panels": "^3.0.6",
+    "tailwindcss": "^4.1.16"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

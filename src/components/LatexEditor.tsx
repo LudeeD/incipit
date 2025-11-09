@@ -6,7 +6,6 @@ import { bracketMatching, syntaxHighlighting, defaultHighlightStyle } from "@cod
 import { oneDark } from "@codemirror/theme-one-dark";
 import { latex } from "codemirror-lang-latex";
 import { invoke } from "@tauri-apps/api/core";
-import "./LatexEditor.css";
 
 interface LatexEditorProps {
   initialContent: string;
@@ -124,13 +123,13 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
   };
 
   return (
-    <div className="latex-editor-container">
-      <div className="editor-toolbar">
-        <span className="editor-title">LaTeX Editor</span>
-        <div className="toolbar-actions">
-          {isCompiling && <span className="compiling-indicator">Compiling...</span>}
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="flex justify-between items-center px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 text-sm">
+        <span className="font-semibold text-gray-800 dark:text-gray-300">LaTeX Editor</span>
+        <div className="flex items-center gap-3">
+          {isCompiling && <span className="text-blue-600 dark:text-cyan-500 text-xs animate-pulse">Compiling...</span>}
           <button
-            className="compile-button"
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white border-none rounded text-[13px] font-medium cursor-pointer transition-colors disabled:bg-blue-400 dark:disabled:bg-cyan-400 disabled:cursor-not-allowed"
             onClick={compileLatex}
             disabled={isCompiling}
           >
@@ -138,7 +137,7 @@ const LatexEditor: React.FC<LatexEditorProps> = ({
           </button>
         </div>
       </div>
-      <div ref={editorRef} className="editor-wrapper" />
+      <div ref={editorRef} className="flex-1 overflow-hidden [&_.cm-editor]:h-full [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm [&_.cm-scroller]:leading-relaxed" />
     </div>
   );
 };
